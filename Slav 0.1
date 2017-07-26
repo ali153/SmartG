@@ -90,7 +90,7 @@ void updateMODE() {
 void getHit(){
     int newHit = analogRead(HIT_PIN);
     if(newHit>hit)
-    hit =newHit;
+    hit =newHit/4;
 }
 
 
