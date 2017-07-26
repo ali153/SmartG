@@ -1,0 +1,165 @@
+// ..............................
+//       ____
+//      /    \    
+//     /  /\  \    Ali KESGÝN
+//    /  /  \  \  Robota
+//   /  /    \  \________
+//  /  /      \___________
+
+#include<Wire.h>
+
+#define DEVICE_ADD 99
+
+const int SLAVE_NUM_W = 2;
+const int SLAVE_NUM_H = 2;
+
+const int BLUE = 1 + 2;
+const int GREEN = 4 + 8 + 16;
+const int RED = 32 + 64 + 128;
+
+const int THRESH_HOLD = 50;
+
+// initialize SLAVE data
+const int SLAVE_ADD[SLAVE_NUM_W][SLAVE_NUM_H] = {
+  { 10, 11 },
+  { 12, 13 }
+};
+
+byte SLAVE_DATA[SLAVE_NUM_W][SLAVE_NUM_H] =    {
+  {  RED, GREEN   },
+  {  GREEN, RED   }
+};
+
+byte SLAVE_DATA_OLD[SLAVE_NUM_W][SLAVE_NUM_H] = {
+  {  0, 0   },
+  {  0, 0   }
+};
+
+byte SLAVE_HIT[SLAVE_NUM_W][SLAVE_NUM_H] =     {
+  {  0, 0   },
+  {  0, 0   }
+};
+
+byte SLAVE_DATA_1[SLAVE_NUM_W][SLAVE_NUM_H] =    {
+  {  RED, GREEN   },
+  {  GREEN, RED   }
+};
+
+byte SLAVE_DATA_2[SLAVE_NUM_W][SLAVE_NUM_H] =    {
+  {  GREEN, RED   },
+  {  RED, GREEN   }
+};
+
+int max_w = 0;
+int max_h = 0;
+
+bool gameOn = 1;
+
+void setup() {
+  // put your setup code here, to run once:
+  Serial.begin(9600);
+  Wire.begin(DEVICE_ADD);
+  PUB_TABLE(SLAVE_DATA);
+}
+
+void loop() {
+
+  if (gameOn) {
+
+    GET_HIT_DATA();
+
+    UPDATE_TABLE();
+
+    PUB_TABLE(SLAVE_DATA);
+
+    Serial.println("LOOP DONE");
+
+  } else {
+
+    PUB_TABLE(SLAVE_DATA_2);
+
+    delay(500);
+
+    PUB_TABLE(SLAVE_DATA_1);
+
+    delay(500);
+
+    PUB_TABLE(SLAVE_DATA_2);
+
+    delay(500);
+
+    PUB_TABLE(SLAVE_DATA_1);
+
+    delay(500);
+
+    for (int i = 0; i < SLAVE_NUM_H; i++) {
+      for (int j = 0; j < SLAVE_NUM_W; j++) {
+        SLAVE_DATA[i][j] = SLAVE_DATA_1[i][j];
+      }
+    }
+    gameOn = 1;
+  }
+
+  delay(5);
+}
+
+
+
+
+void GET_HIT_DATA() {
+
+  for (int i = 0; i < SLAVE_NUM_H; i++) {
+    for (int j = 0; j < SLAVE_NUM_W; j++) {
+
+      Wire.requestFrom(SLAVE_ADD[i][j], 1);
+      while (Wire.available()) {
+        SLAVE_HIT[i][j] = Wire.read();
+      }
+      if (SLAVE_HIT[i][j] > SLAVE_HIT[max_h][max_w]) {
+        max_h = i;
+        max_w = j;
+      }
+      delay(1);
+    }
+  }
+  Serial.println("GET HIT DATA");
+}
+
+void UPDATE_TABLE() {
+
+  if (SLAVE_HIT[max_h][max_w] > THRESH_HOLD) {
+    // Switch the biggest hit
+    if (SLAVE_DATA[max_h][max_w] == RED) {
+      SLAVE_DATA[max_h][max_w] = GREEN;
+    } else {
+      SLAVE_DATA[max_h][max_w] = RED;
+    }
+
+    for (int i = 0; i < SLAVE_NUM_H; i++) {
+      for (int j = 0; j < SLAVE_NUM_W; j++) {
+        if (SLAVE_DATA[i][j] != SLAVE_DATA[0][0])
+          gameOn = 1;
+      }
+    }
+    Serial.println("TABLE IS UPDATED");
+  }
+}
+
+void PUB_TABLE(byte SLAVE_DAT[][SLAVE_NUM_W]) {
+  for (int i = 0; i < SLAVE_NUM_H; i++) {
+    for (int j = 0; j < SLAVE_NUM_W; j++) {
+      if (SLAVE_DAT[i][j] != SLAVE_DATA_OLD[i][j]) {
+
+        Serial.println("CHANGE");
+        Serial.println(SLAVE_ADD[i][j]);
+        Wire.beginTransmission(SLAVE_ADD[i][j]);
+        Wire.write(SLAVE_DAT[i][j]);
+        Wire.endTransmission();
+        delay(1);
+        SLAVE_DATA_OLD[i][j] = SLAVE_DAT[i][j];
+      }
+    }
+  }
+  Serial.println("TABLE IS PUBLISHED");
+}
+
