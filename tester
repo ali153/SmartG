@@ -1,0 +1,39 @@
+#define R_PIN 5
+#define G_PIN 3
+#define B_PIN 6
+
+int A = 0;
+int hit = 0;
+
+void setup() {
+  // put your setup code here, to run once:
+  pinMode(B_PIN, OUTPUT);
+  pinMode(G_PIN, OUTPUT);
+  pinMode(B_PIN, OUTPUT);
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+  A = analogRead(A0);
+  if (A > 250) {
+    
+    hit = hit + 1;
+    
+    if (hit % 3 == 0) {
+      digitalWrite(R_PIN, HIGH);
+      digitalWrite(G_PIN, LOW);
+      digitalWrite(B_PIN, LOW);
+    }
+    else if (hit % 3 == 1) {
+      digitalWrite(R_PIN, LOW);
+      digitalWrite(G_PIN, HIGH);
+      digitalWrite(B_PIN, LOW);
+    }
+    else if (hit % 3 == 2) {
+      digitalWrite(R_PIN, LOW);
+      digitalWrite(G_PIN, LOW);
+      digitalWrite(B_PIN, HIGH);
+    }
+    delay(1000);
+  }
+}
