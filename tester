@@ -16,6 +16,10 @@ void loop() {
   // put your main code here, to run repeatedly:
   A = analogRead(A0);
   if (A > 250) {
+  
+  digitalWrite(R_PIN,LOW);
+  digitalWrite(G_PIN,LOW);
+  digitalWrite(B_PIN,LOW);
     
     hit = hit + 1;
     
